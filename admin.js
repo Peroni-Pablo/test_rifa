@@ -1,0 +1,139 @@
+const tablaAdmin = document.getElementById("tablaAdmin");
+const btnLimpiarLista = document.getElementById("btnLimpiarLista");
+
+async function cargarTablaAdmin() {
+  const { data, error } = await supabaseClient
+    .from("rifa")
+    .select("*")
+    .order("numero", { ascending: true });
+
+  if (error) {
+    console.error("Error al cargar la tabla:", error);
+    alert("Error al cargar los números de la rifa.");
+    return;
+  }
+
+  tablaAdmin.innerHTML = "";
+
+  data.forEach(item => {
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+      <td>${formatearNumero(item.numero)}</td>
+      <td>${item.nombre || "-"}</td>
+      <td style="font-weight:bold; color:${obtenerColorEstado(item.estado || "libre")};">
+        ${item.estado || "libre"}
+      </td>
+      <td>
+        <button onclick="confirmarNumero('${item.numero}')">✅ Confirmar</button>
+        <button onclick="cancelarNumero('${item.numero}')">❌ Cancelar</button>
+      </td>
+    `;
+
+    tablaAdmin.appendChild(fila);
+  });
+}
+
+async function confirmarNumero(numero) {
+  const confirmar = confirm(`¿Querés confirmar el número ${formatearNumero(numero)}?`);
+  if (!confirmar) return;
+
+  const { data, error: errorBuscar } = await supabaseClient
+    .from("rifa")
+    .select("*")
+    .eq("numero", numero)
+    .single();
+
+  if (errorBuscar) {
+    console.error("Error al buscar número:", errorBuscar);
+    alert("No se pudo buscar el número.");
+    return;
+  }
+
+  if (!data.nombre || data.estado === "libre") {
+    alert("No podés confirmar un número que está libre.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("rifa")
+    .update({ estado: "confirmado" })
+    .eq("numero", numero);
+
+  if (error) {
+    console.error("Error al confirmar número:", error);
+    alert("No se pudo confirmar el número.");
+    return;
+  }
+
+  alert(`Número ${formatearNumero(numero)} confirmado correctamente.`);
+  cargarTablaAdmin();
+}
+
+async function cancelarNumero(numero) {
+  const confirmar = confirm(`¿Querés cancelar/liberar el número ${formatearNumero(numero)}?`);
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("rifa")
+    .update({
+      nombre: null,
+      estado: "libre"
+    })
+    .eq("numero", numero);
+
+  if (error) {
+    console.error("Error al cancelar número:", error);
+    alert("No se pudo cancelar el número.");
+    return;
+  }
+
+  alert(`Número ${formatearNumero(numero)} liberado correctamente.`);
+  cargarTablaAdmin();
+}
+
+if (btnLimpiarLista) {
+  btnLimpiarLista.addEventListener("click", async () => {
+    const confirmar = confirm("¿Seguro que querés limpiar TODA la lista de la rifa?");
+    if (!confirmar) return;
+
+    const { error } = await supabaseClient
+      .from("rifa")
+      .update({
+        nombre: null,
+        estado: "libre"
+      })
+      .neq("numero", "");
+
+    if (error) {
+      console.error("Error al limpiar la lista:", error);
+      alert("No se pudo limpiar la lista.");
+      return;
+    }
+
+    alert("Lista limpiada correctamente.");
+    cargarTablaAdmin();
+  });
+}
+
+function obtenerColorEstado(estado) {
+  switch (estado) {
+    case "libre":
+      return "green";
+    case "reservado":
+      return "orange";
+    case "confirmado":
+      return "red";
+    default:
+      return "black";
+  }
+}
+
+function formatearNumero(numero) {
+  return String(numero).padStart(2, "0");
+}
+
+window.confirmarNumero = confirmarNumero;
+window.cancelarNumero = cancelarNumero;
+
+cargarTablaAdmin();
