@@ -9,7 +9,7 @@ async function cargarTablaAdmin() {
 
   if (error) {
     console.error("Error al cargar la tabla:", error);
-    alert("Error al cargar los números de la rifa.");
+    alert("Error al cargar los números de la rifa: " + error.message);
     return;
   }
 
@@ -46,7 +46,7 @@ async function confirmarNumero(numero) {
 
   if (errorBuscar) {
     console.error("Error al buscar número:", errorBuscar);
-    alert("No se pudo buscar el número.");
+    alert("No se pudo buscar el número: " + errorBuscar.message);
     return;
   }
 
@@ -62,7 +62,7 @@ async function confirmarNumero(numero) {
 
   if (error) {
     console.error("Error al confirmar número:", error);
-    alert("No se pudo confirmar el número.");
+    alert("No se pudo confirmar el número: " + error.message);
     return;
   }
 
@@ -84,7 +84,7 @@ async function cancelarNumero(numero) {
 
   if (error) {
     console.error("Error al cancelar número:", error);
-    alert("No se pudo cancelar el número.");
+    alert("No se pudo cancelar el número: " + error.message);
     return;
   }
 
@@ -103,11 +103,11 @@ if (btnLimpiarLista) {
         nombre: null,
         estado: "libre"
       })
-      .neq("numero",0);
+      .gte("numero", 0);
 
     if (error) {
       console.error("Error al limpiar la lista:", error);
-      alert("No se pudo limpiar la lista.");
+      alert("No se pudo limpiar la lista: " + error.message);
       return;
     }
 
