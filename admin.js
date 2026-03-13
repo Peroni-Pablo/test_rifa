@@ -3,7 +3,7 @@ const btnLimpiarLista = document.getElementById("btnLimpiarLista");
 
 async function cargarTablaAdmin() {
   const { data, error } = await supabaseClient
-    .from("rifa")
+    .from("numeros_rifa")
     .select("*")
     .order("numero", { ascending: true });
 
@@ -39,7 +39,7 @@ async function confirmarNumero(numero) {
   if (!confirmar) return;
 
   const { data, error: errorBuscar } = await supabaseClient
-    .from("rifa")
+    .from("numeros_rifa")
     .select("*")
     .eq("numero", numero)
     .single();
@@ -56,7 +56,7 @@ async function confirmarNumero(numero) {
   }
 
   const { error } = await supabaseClient
-    .from("rifa")
+    .from("numeros_rifa")
     .update({ estado: "confirmado" })
     .eq("numero", numero);
 
@@ -75,7 +75,7 @@ async function cancelarNumero(numero) {
   if (!confirmar) return;
 
   const { error } = await supabaseClient
-    .from("rifa")
+    .from("numeros_rifa")
     .update({
       nombre: null,
       estado: "libre"
@@ -98,12 +98,12 @@ if (btnLimpiarLista) {
     if (!confirmar) return;
 
     const { error } = await supabaseClient
-      .from("rifa")
+      .from("numeros_rifa")
       .update({
         nombre: null,
         estado: "libre"
       })
-      .neq("numero", "");
+      .neq("numero",0);
 
     if (error) {
       console.error("Error al limpiar la lista:", error);
