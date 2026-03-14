@@ -116,6 +116,52 @@ if (btnLimpiarLista) {
   });
 }
 
+async function descargarCSV() {
+  const { data, error } = await supabaseClient
+    .from("numeros_rifa")
+    .select("numero, nombre, estado")
+    .order("numero", { ascending: true });
+
+  if (error) {
+    console.error("Error al descargar CSV:", error);
+    alert("No se pudo descargar el archivo CSV: " + error.message);
+    return;
+  }
+
+  // Encabezados
+  let csv = "indice;numero;nombre;estado\n";
+
+  // Filas
+  data.forEach((item, index) => {
+    const indice = index + 1;
+    const numero = String(item.numero).padStart(2, "0");
+    const nombre = item.nombre ? item.nombre.replace(/;/g, ",") : "";
+    const estado = item.estado || "libre";
+
+    csv += `${indice};${numero};${nombre};${estado}\n`;
+  });
+
+  // BOM para que Excel lea bien acentos/ñ
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  // Nombre del archivo con fecha
+  const hoy = new Date();
+  const fecha = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", `rifa_${fecha}.csv`);
+  link.style.visibility = "hidden";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
 function obtenerColorEstado(estado) {
   switch (estado) {
     case "libre":
