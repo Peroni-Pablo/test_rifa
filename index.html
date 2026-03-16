@@ -13,7 +13,49 @@
 </head>
 
 <body class="pagina-index">
+<div id="modalInfo" class="modal-info-pro">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
+    
+    <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
+    <div class="modal-header">
+      <div img="image.png"></div>
+      <div>
+        <h2 id="tituloInfo">Cargando...</h2>
+        <p id="subtituloInfo" class="subtitulo-modal">Cargando información...</p>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-item">
+        <span class="info-label">Valor del número</span>
+        <span id="infoValor" class="info-value">-</span>
+      </div>
+
+      <div class="info-item">
+        <span class="info-label">Forma de pago</span>
+        <span id="infoPago" class="info-value">-</span>
+      </div>
+
+      <div class="aviso-extra" id="infoMensajeExtra">
+        -
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a 
+        id="btnWhatsappInfo"
+        class="btn-whatsapp-pro" 
+        href="#"
+        target="_blank"
+      >
+        Consultar por WhatsApp
+      </a>
+
+      <button class="btn-cerrar-secundario" onclick="cerrarInfo()">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 
 <div id="numeros" class="grid"></div>

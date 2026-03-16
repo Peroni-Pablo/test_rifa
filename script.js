@@ -89,4 +89,33 @@ async function comprarNumero(numero) {
   }
 }
 
+
+
+async function cargarInfoRifa() {
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("*")
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error("Error al cargar info de la rifa:", error);
+    return;
+  }
+
+  document.getElementById("tituloInfo").textContent = data.titulo_modal || "Información de la Rifa";
+  document.getElementById("subtituloInfo").textContent = data.subtitulo_modal || "";
+  document.getElementById("infoValor").textContent = data.valor_numero || "-";
+  document.getElementById("infoPago").textContent = data.forma_pago || "-";
+  document.getElementById("infoMensajeExtra").textContent = data.mensaje_extra || "-";
+
+  const btnWhatsapp = document.getElementById("btnWhatsappInfo");
+  if (btnWhatsapp && data.whatsapp) {
+    btnWhatsapp.href = `https://wa.me/${data.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
+  } else if (btnWhatsapp) {
+    btnWhatsapp.href = "#";
+  }
+}
+
 cargarNumeros();
+cargarInfoRifa();

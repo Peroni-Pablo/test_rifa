@@ -183,3 +183,59 @@ window.confirmarNumero = confirmarNumero;
 window.cancelarNumero = cancelarNumero;
 
 cargarTablaAdmin();
+
+async function cargarConfiguracionRifa() {
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("*")
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error("Error al cargar configuración:", error);
+    return;
+  }
+
+  document.getElementById("titulo_modal").value = data.titulo_modal || "";
+  document.getElementById("subtitulo_modal").value = data.subtitulo_modal || "";
+  document.getElementById("valor_numero").value = data.valor_numero || "";
+  document.getElementById("forma_pago").value = data.forma_pago || "";
+  document.getElementById("whatsapp").value = data.whatsapp || "";
+  document.getElementById("mensaje_extra").value = data.mensaje_extra || "";
+}
+
+async function guardarConfiguracionRifa() {
+  const titulo_modal = document.getElementById("titulo_modal").value.trim();
+  const subtitulo_modal = document.getElementById("subtitulo_modal").value.trim();
+  const valor_numero = document.getElementById("valor_numero").value.trim();
+  const forma_pago = document.getElementById("forma_pago").value.trim();
+  const whatsapp = document.getElementById("whatsapp").value.trim();
+  const mensaje_extra = document.getElementById("mensaje_extra").value.trim();
+
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({
+      titulo_modal,
+      subtitulo_modal,
+      valor_numero,
+      forma_pago,
+      whatsapp,
+      mensaje_extra
+    })
+    .eq("id", 1);
+
+  if (error) {
+    console.error("Error al guardar configuración:", error);
+    alert("No se pudo guardar la información.");
+    return;
+  }
+
+  alert("Información guardada correctamente.");
+}
+
+const guardarConfigBtn = document.getElementById("guardarConfigBtn");
+if (guardarConfigBtn) {
+  guardarConfigBtn.addEventListener("click", guardarConfiguracionRifa);
+}
+
+cargarConfiguracionRifa();
