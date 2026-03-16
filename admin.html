@@ -10,25 +10,33 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>
 </head>
-<body class="pagina_admid">
+<body class="pagina-admin">
 
-  <h1>Panel Admin</h1>
-  <h2>Panel Administrador</h2>
-  <button onclick="descargarCSV()">Descargar Rifa</button>
+  <div class="container">
+    <div class="panel panel-admin">
+      <h1>Panel Admin</h1>
+      <h2>Panel Administrador</h2>
 
-  <button id="btnLimpiarLista">Limpiar lista</button>
+      <div class="acciones-admin">
+        <button onclick="descargarCSV()">Descargar Rifa</button>
+        <button id="btnLimpiarLista">Limpiar lista</button>
+      </div>
 
-  <table border="1" cellpadding="10">
-    <thead>
-      <tr>
-        <th>Número</th>
-        <th>Nombre</th>
-        <th>Estado</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="tablaAdmin"></tbody>
-  </table>
+      <div class="tabla-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaAdmin"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <script src="admin.js"></script>
 </body>
