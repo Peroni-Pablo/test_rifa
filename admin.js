@@ -264,5 +264,45 @@ window.editarConfig = editarConfig;
 // =============================
 // INICIO
 // =============================
+
+const tablaAdmin = document.getElementById("tablaAdmin");
+
+async function cargarTablaAdmin() {
+  console.log("Iniciando carga de tabla admin...");
+
+  if (!tablaAdmin) {
+    console.error("No existe #tablaAdmin en el HTML");
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("numeros_rifa")
+    .select("*")
+    .order("numero", { ascending: true });
+
+  if (error) {
+    console.error("Error al cargar la tabla:", error);
+    alert("Error al cargar la tabla: " + error.message);
+    return;
+  }
+
+  console.log("Datos recibidos:", data);
+
+  tablaAdmin.innerHTML = "";
+
+  data.forEach(item => {
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+      <td>${String(item.numero).padStart(2, "0")}</td>
+      <td>${item.nombre || "-"}</td>
+      <td>${item.estado || "libre"}</td>
+    `;
+
+    tablaAdmin.appendChild(fila);
+  });
+}
+
+cargarTablaAdmin();
 cargarConfiguracionRifa();
 cargarTablaConfig();
