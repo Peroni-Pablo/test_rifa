@@ -204,6 +204,9 @@ async function cargarConfiguracionRifa() {
   document.getElementById("mensaje_extra").value = data.mensaje_extra || "";
 }
 
+
+cargarConfiguracionRifa();
+
 async function guardarConfiguracionRifa() {
   const titulo_modal = document.getElementById("titulo_modal").value.trim();
   const subtitulo_modal = document.getElementById("subtitulo_modal").value.trim();
@@ -212,30 +215,67 @@ async function guardarConfiguracionRifa() {
   const whatsapp = document.getElementById("whatsapp").value.trim();
   const mensaje_extra = document.getElementById("mensaje_extra").value.trim();
 
-  const { error } = await supabaseClient
+  // 1) Buscar si ya existe una fila
+  const { data: existentes, error: errorBuscar } = await supabaseClient
     .from("config_rifa")
-    .update({
-      titulo_modal,
-      subtitulo_modal,
-      valor_numero,
-      forma_pago,
-      whatsapp,
-      mensaje_extra
-    })
-    .eq("id", 1);
+    .select("id")
+    .order("id", { ascending: true })
+    .limit(1);
 
-  if (error) {
-    console.error("Error al guardar configuración:", error);
+  if (errorBuscar) {
+    console.error("Error al buscar configuración:", errorBuscar);
     alert("No se pudo guardar la información.");
     return;
   }
 
-  alert("Información guardada correctamente.");
+  let errorGuardar = null;
+
+  // 2) Si existe, actualiza
+  if (existentes && existentes.length > 0) {
+    const idConfig = existentes[0].id;
+
+    const { error } = await supabaseClient
+      .from("config_rifa")
+      .update({
+        titulo_modal,
+        subtitulo_modal,
+        valor_numero,
+        forma_pago,
+        whatsapp,
+        mensaje_extra
+      })
+      .eq("id", idConfig);
+
+    errorGuardar = error;
+  } 
+  // 3) Si no existe, inserta
+  else {
+    const { error } = await supabaseClient
+      .from("config_rifa")
+      .insert([{
+        titulo_modal,
+        subtitulo_modal,
+        valor_numero,
+        forma_pago,
+        whatsapp,
+        mensaje_extra
+      }]);
+
+    errorGuardar = error;
+  }
+
+  if (errorGuardar) {
+    console.error("Error al guardar configuración:", errorGuardar);
+    alert("No se pudo guardar la información.");
+    return;
+  }
+
+  alert("Los cambios han sido guardados correctamente");
 }
 
 const guardarConfigBtn = document.getElementById("guardarConfigBtn");
+
 if (guardarConfigBtn) {
   guardarConfigBtn.addEventListener("click", guardarConfiguracionRifa);
 }
 
-cargarConfiguracionRifa();

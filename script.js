@@ -90,32 +90,78 @@ async function comprarNumero(numero) {
 }
 
 
-
 async function cargarInfoRifa() {
   const { data, error } = await supabaseClient
     .from("config_rifa")
     .select("*")
-    .limit(1)
-    .single();
+    .order("id", { ascending: true })
+    .limit(1);
 
   if (error) {
     console.error("Error al cargar info de la rifa:", error);
     return;
   }
 
-  document.getElementById("tituloInfo").textContent = data.titulo_modal || "Información de la Rifa";
-  document.getElementById("subtituloInfo").textContent = data.subtitulo_modal || "";
-  document.getElementById("infoValor").textContent = data.valor_numero || "-";
-  document.getElementById("infoPago").textContent = data.forma_pago || "-";
-  document.getElementById("infoMensajeExtra").textContent = data.mensaje_extra || "-";
+  if (!data || data.length === 0) {
+    console.warn("No hay configuración guardada en config_rifa");
+    return;
+  }
 
+  const config = data[0];
+
+  const tituloInfo = document.getElementById("tituloInfo");
+  const subtituloInfo = document.getElementById("subtituloInfo");
+  const infoValor = document.getElementById("infoValor");
+  const infoPago = document.getElementById("infoPago");
+  const infoMensajeExtra = document.getElementById("infoMensajeExtra");
   const btnWhatsapp = document.getElementById("btnWhatsappInfo");
-  if (btnWhatsapp && data.whatsapp) {
-    btnWhatsapp.href = `https://wa.me/${data.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
-  } else if (btnWhatsapp) {
-    btnWhatsapp.href = "#";
+
+  if (tituloInfo) tituloInfo.textContent = config.titulo_modal || "Información de la Rifa";
+  if (subtituloInfo) subtituloInfo.textContent = config.subtitulo_modal || "";
+  if (infoValor) infoValor.textContent = config.valor_numero || "-";
+  if (infoPago) infoPago.textContent = config.forma_pago || "-";
+  if (infoMensajeExtra) infoMensajeExtra.textContent = config.mensaje_extra || "-";
+
+  if (btnWhatsapp) {
+    if (config.whatsapp && config.whatsapp.trim() !== "") {
+      btnWhatsapp.href = `https://wa.me/${config.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
+      btnWhatsapp.style.display = "flex";
+    } else {
+      btnWhatsapp.href = "#";
+      btnWhatsapp.style.display = "none";
+    }
   }
 }
+
+
+function abrirInfo() {
+  const modal = document.getElementById("modalInfo");
+  if (modal) {
+    modal.classList.add("mostrar");
+    document.body.classList.add("modal-abierto");
+  }
+}
+
+function cerrarInfo() {
+  const modal = document.getElementById("modalInfo");
+  if (modal) {
+    modal.classList.remove("mostrar");
+    document.body.classList.remove("modal-abierto");
+  }
+}
+
+window.addEventListener("click", function(e) {
+  const modal = document.getElementById("modalInfo");
+  if (e.target === modal) {
+    cerrarInfo();
+  }
+});
+
+window.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    cerrarInfo();
+  }
+});
 
 cargarNumeros();
 cargarInfoRifa();

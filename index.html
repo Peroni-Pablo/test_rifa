@@ -18,8 +18,16 @@
     
     <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
+    <!-- MODAL INFO -->
+<div id="modalInfo" class="modal-info-pro">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
+
+    <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
+
     <div class="modal-header">
-      <div class="icono-info">ℹ️</div>
+      <div class="icono-info-grande">
+        <img src="infoIcon.png" alt="Info" class="icono-modal-img">
+      </div>
       <div>
         <h2 id="tituloInfo">Cargando...</h2>
         <p id="subtituloInfo" class="subtitulo-modal">Cargando información...</p>
@@ -37,15 +45,13 @@
         <span id="infoPago" class="info-value">-</span>
       </div>
 
-      <div class="aviso-extra" id="infoMensajeExtra">
-        -
-      </div>
+      <div class="aviso-extra" id="infoMensajeExtra">-</div>
     </div>
 
     <div class="modal-footer">
-      <a 
+      <a
         id="btnWhatsappInfo"
-        class="btn-whatsapp-pro" 
+        class="btn-whatsapp-pro"
         href="#"
         target="_blank"
       >
@@ -59,7 +65,10 @@
 
 
 <div id="numeros" class="grid"></div>
-
+<!-- BOTON FLOTANTE DE INFO -->
+<button id="btnInfoFlotante" class="btn-info-flotante" onclick="abrirInfo()">
+  <img src="infoIcon.png" alt="Información" class="icono-info-img">
+</button>
 <script src="script.js"></script>
 
 </body>
