@@ -1,35 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Rifa</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin - Rifa JC Hogar</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>
 </head>
 <body>
-
   <div class="container">
     <div class="panel">
       <h1>Panel Administrador</h1>
 
-      <h2>Tabla de números</h2>
+      <!-- CONFIGURACIÓN DEL MODAL -->
+      <section class="admin-card">
+        <h2>Configuración del Modal de Información</h2>
 
-      <div class="tabla-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Nombre</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="tablaAdmin"></tbody>
-        </table>
-      </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="tituloModal">Título</label>
+            <input type="text" id="tituloModal" placeholder="Ej: Información de la rifa" />
+          </div>
+
+          <div class="form-group">
+            <label for="subtituloModal">Subtítulo</label>
+            <input type="text" id="subtituloModal" placeholder="Ej: Datos importantes" />
+          </div>
+
+          <div class="form-group">
+            <label for="valorNumero">Valor del número</label>
+            <input type="text" id="valorNumero" placeholder="Ej: $2000" />
+          </div>
+
+          <div class="form-group">
+            <label for="formaPago">Forma de pago</label>
+            <input type="text" id="formaPago" placeholder="Ej: Transferencia / Efectivo" />
+          </div>
+
+          <div class="form-group">
+            <label for="whatsappModal">WhatsApp (solo números, con código país)</label>
+            <input type="text" id="whatsappModal" placeholder="Ej: 5493472123456" />
+          </div>
+
+          <div class="form-group full-width">
+            <label for="mensajeExtra">Mensaje extra</label>
+            <textarea id="mensajeExtra" rows="4" placeholder="Ej: Sortea el 20/04 por Lotería Nacional"></textarea>
+          </div>
+        </div>
+
+        <button id="btnGuardarInfo" class="btn-primary">Guardar información</button>
+      </section>
+
+      <!-- TABLA ADMIN -->
+      <section class="admin-card">
+        <h2>Lista de números</h2>
+
+        <div class="tabla-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Nombre</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaAdmin"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
 
