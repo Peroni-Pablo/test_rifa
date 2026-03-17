@@ -13,8 +13,17 @@
 
 <body class="pagina-index">
 
+  <!-- BANNER DE PRESENTACIÓN -->
+  <!-- Se muestra si el admin subió una imagen. Se oculta al hacer click o con el botón. -->
+  <div id="bannerPresentacion" class="banner-presentacion" style="display:none;" onclick="cerrarBanner()">
+    <div class="banner-inner" onclick="event.stopPropagation()">
+      <img id="bannerImg" src="" alt="Imagen de presentación" class="banner-img">
+      <button class="banner-cerrar" onclick="cerrarBanner()">✕</button>
+    </div>
+  </div>
+
   <!-- MODAL INFO -->
-  <div id="modalInfo" class="modal-info-pro" onclick="cerrarAlClickearFondo(event)">
+  <div id="modalInfo" class="modal-info-pro">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
       <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
@@ -71,15 +80,6 @@
   </button>
 
   <script src="script.js"></script>
-
-  <script>
-    // Cerrar modal al hacer click fuera de la card
-    function cerrarAlClickearFondo(event) {
-      if (event.target === document.getElementById('modalInfo')) {
-        cerrarInfo();
-      }
-    }
-  </script>
 
 </body>
 </html>

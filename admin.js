@@ -286,7 +286,7 @@ async function descargarRifaCSV() {
 
     // Convertir a texto CSV
     const csvContent = filas
-      .map(fila => fila.map(celda => `"${celda}"`).join(";"))
+      .map(fila => fila.map(celda => `"${celda}"`).join(","))
       .join("\n");
 
     // Agregar BOM para que Excel abra bien los acentos
@@ -311,3 +311,216 @@ const btnDescargarRifa = document.getElementById("btnDescargarRifa");
 if (btnDescargarRifa) {
   btnDescargarRifa.addEventListener("click", descargarRifaCSV);
 }
+
+// =========================
+// IMAGEN DE PRESENTACIÓN
+// =========================
+const STORAGE_BUCKET = "rifa-imagenes"; // <-- nombre del bucket en Supabase Storage
+const STORAGE_PATH   = "presentacion/banner.jpg"; // path fijo, siempre sobreescribe
+
+const inputImagen        = document.getElementById("inputImagen");
+const btnSeleccionarImg  = document.getElementById("btnSeleccionarImagen");
+const btnSubirImagen     = document.getElementById("btnSubirImagen");
+const btnQuitarImagen    = document.getElementById("btnQuitarImagen");
+const uploadArea         = document.getElementById("uploadArea");
+const uploadPlaceholder  = document.getElementById("uploadPlaceholder");
+const previewActual      = document.getElementById("previewActual");
+const imgPreviewActual   = document.getElementById("imgPreviewActual");
+const uploadStatus       = document.getElementById("uploadStatus");
+
+let archivoSeleccionado = null;
+
+// Mostrar estado en el área de upload
+function mostrarStatus(mensaje, tipo = "info") {
+  uploadStatus.textContent = mensaje;
+  uploadStatus.className   = `upload-status visible status-${tipo}`;
+}
+
+function ocultarStatus() {
+  uploadStatus.className = "upload-status";
+}
+
+// Cargar imagen actual desde config_rifa
+async function cargarImagenActual() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("imagen_url")
+      .eq("id", 1)
+      .single();
+
+    if (error || !data?.imagen_url) return;
+
+    imgPreviewActual.src      = data.imagen_url;
+    previewActual.style.display  = "flex";
+    btnQuitarImagen.style.display = "inline-block";
+  } catch (err) {
+    console.error("Error al cargar imagen actual:", err);
+  }
+}
+
+// Preview local al seleccionar archivo
+function previsualizarArchivo(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imgPreviewActual.src       = e.target.result;
+    previewActual.style.display  = "flex";
+    uploadPlaceholder.style.display = "none";
+  };
+  reader.readAsDataURL(file);
+}
+
+// Subir imagen a Supabase Storage y guardar URL en config_rifa
+async function subirImagen() {
+  if (!archivoSeleccionado) return;
+
+  btnSubirImagen.disabled  = true;
+  btnSubirImagen.textContent = "Subiendo...";
+  mostrarStatus("Subiendo imagen...", "info");
+
+  try {
+    // 1. Subir al bucket (upsert = sobreescribe si ya existe)
+    const { error: uploadError } = await supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .upload(STORAGE_PATH, archivoSeleccionado, {
+        upsert: true,
+        contentType: archivoSeleccionado.type
+      });
+
+    if (uploadError) {
+      mostrarStatus("Error al subir la imagen: " + uploadError.message, "error");
+      btnSubirImagen.disabled  = false;
+      btnSubirImagen.textContent = "⬆ Subir imagen";
+      return;
+    }
+
+    // 2. Obtener URL pública
+    const { data: urlData } = supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(STORAGE_PATH);
+
+    // Forzar cache-bust para que index siempre cargue la nueva imagen
+    const urlFinal = urlData.publicUrl + "?t=" + Date.now();
+
+    // 3. Guardar URL en config_rifa
+    const { error: dbError } = await supabaseClient
+      .from("config_rifa")
+      .upsert({ id: 1, imagen_url: urlFinal });
+
+    if (dbError) {
+      mostrarStatus("Imagen subida pero no se pudo guardar la URL: " + dbError.message, "error");
+      return;
+    }
+
+    mostrarStatus("✓ Imagen subida y guardada correctamente.", "ok");
+    btnSubirImagen.textContent = "⬆ Subir imagen";
+    btnQuitarImagen.style.display = "inline-block";
+    archivoSeleccionado = null;
+    btnSubirImagen.disabled = true;
+
+  } catch (err) {
+    console.error("Error inesperado al subir imagen:", err);
+    mostrarStatus("Ocurrió un error inesperado.", "error");
+    btnSubirImagen.disabled  = false;
+    btnSubirImagen.textContent = "⬆ Subir imagen";
+  }
+}
+
+// Quitar imagen: borra del storage y limpia la URL en config_rifa
+async function quitarImagen() {
+  const confirmar = window.confirm("¿Seguro que querés quitar la imagen de presentación?");
+  if (!confirmar) return;
+
+  mostrarStatus("Quitando imagen...", "info");
+
+  try {
+    await supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .remove([STORAGE_PATH]);
+
+    const { error } = await supabaseClient
+      .from("config_rifa")
+      .update({ imagen_url: null })
+      .eq("id", 1);
+
+    if (error) {
+      mostrarStatus("Error al quitar la imagen: " + error.message, "error");
+      return;
+    }
+
+    imgPreviewActual.src         = "";
+    previewActual.style.display  = "none";
+    uploadPlaceholder.style.display = "flex";
+    btnQuitarImagen.style.display   = "none";
+    archivoSeleccionado = null;
+    btnSubirImagen.disabled = true;
+    mostrarStatus("Imagen quitada correctamente.", "ok");
+
+  } catch (err) {
+    console.error("Error al quitar imagen:", err);
+    mostrarStatus("Ocurrió un error inesperado.", "error");
+  }
+}
+
+// === EVENTOS DEL UPLOADER ===
+
+if (btnSeleccionarImg) {
+  btnSeleccionarImg.addEventListener("click", () => inputImagen.click());
+}
+
+if (inputImagen) {
+  inputImagen.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      mostrarStatus("La imagen no puede superar 5 MB.", "error");
+      return;
+    }
+
+    archivoSeleccionado = file;
+    previsualizarArchivo(file);
+    btnSubirImagen.disabled = false;
+    ocultarStatus();
+  });
+}
+
+// Drag & drop
+if (uploadArea) {
+  uploadArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadArea.classList.add("drag-over");
+  });
+
+  uploadArea.addEventListener("dragleave", () => {
+    uploadArea.classList.remove("drag-over");
+  });
+
+  uploadArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      mostrarStatus("La imagen no puede superar 5 MB.", "error");
+      return;
+    }
+
+    archivoSeleccionado = file;
+    previsualizarArchivo(file);
+    btnSubirImagen.disabled = false;
+    ocultarStatus();
+  });
+}
+
+if (btnSubirImagen) {
+  btnSubirImagen.addEventListener("click", subirImagen);
+}
+
+if (btnQuitarImagen) {
+  btnQuitarImagen.addEventListener("click", quitarImagen);
+}
+
+// Cargar imagen actual al iniciar el admin
+cargarImagenActual();

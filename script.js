@@ -127,16 +127,54 @@ async function cargarInfoRifa() {
 }
 
 // =============================
+// BANNER DE PRESENTACIÓN
+// =============================
+async function cargarBanner() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("imagen_url")
+      .eq("id", 1)
+      .single();
+
+    if (error || !data?.imagen_url) return; // sin imagen: no muestra nada
+
+    const banner   = document.getElementById("bannerPresentacion");
+    const bannerImg = document.getElementById("bannerImg");
+
+    if (!banner || !bannerImg) return;
+
+    bannerImg.src         = data.imagen_url;
+    banner.style.display  = "flex";
+    document.body.classList.add("banner-abierto");
+
+  } catch (err) {
+    console.error("Error al cargar banner:", err);
+  }
+}
+
+function cerrarBanner() {
+  const banner = document.getElementById("bannerPresentacion");
+  if (banner) {
+    banner.classList.add("cerrando");
+    setTimeout(() => {
+      banner.style.display = "none";
+      banner.classList.remove("cerrando");
+      document.body.classList.remove("banner-abierto");
+    }, 280);
+  }
+}
+
+window.cerrarBanner = cerrarBanner;
+
+// =============================
 // MODAL INFO
 // =============================
-
-// Al abrir: primero trae datos frescos, luego muestra el modal
 async function abrirInfo() {
   const modal = document.getElementById("modalInfo");
   if (!modal) return;
 
-  // Traer siempre los datos más recientes de Supabase antes de mostrar
-  await cargarInfoRifa();
+  await cargarInfoRifa(); // siempre trae datos frescos
 
   modal.classList.add("mostrar");
   document.body.classList.add("modal-abierto");
@@ -153,15 +191,16 @@ function cerrarInfo() {
 window.abrirInfo  = abrirInfo;
 window.cerrarInfo = cerrarInfo;
 
-// Cerrar al click en el fondo
 window.addEventListener("click", function (e) {
   const modal = document.getElementById("modalInfo");
   if (e.target === modal) cerrarInfo();
 });
 
-// Cerrar con Escape
 window.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") cerrarInfo();
+  if (e.key === "Escape") {
+    cerrarInfo();
+    cerrarBanner();
+  }
 });
 
 // =============================
@@ -176,7 +215,6 @@ supabaseClient
 
 // =============================
 // TIEMPO REAL: CONFIG_RIFA
-// (respaldo — funciona solo si Realtime está activado en Supabase para esta tabla)
 // =============================
 supabaseClient
   .channel("config_rifa_changes")
@@ -190,3 +228,4 @@ supabaseClient
 // =============================
 cargarNumeros();
 cargarInfoRifa();
+cargarBanner();   // muestra la imagen apenas carga la página

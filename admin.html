@@ -56,6 +56,33 @@
         <button id="btnGuardarConfig" class="btn-guardar">Guardar información</button>
       </section>
 
+      <!-- IMAGEN DE PRESENTACIÓN -->
+      <section class="admin-section">
+        <h2>Imagen de presentación</h2>
+        <p class="admin-hint">Esta imagen aparece automáticamente cuando el usuario entra al índice.</p>
+
+        <div class="upload-area" id="uploadArea">
+          <div id="previewActual" class="preview-actual" style="display:none;">
+            <img id="imgPreviewActual" src="" alt="Imagen actual">
+            <span class="preview-label">Imagen actual</span>
+          </div>
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">🖼️</span>
+            <span>Arrastrá una imagen o hacé click para seleccionar</span>
+            <span class="upload-hint">JPG, PNG, WEBP — máx. 5 MB</span>
+          </div>
+          <input type="file" id="inputImagen" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="upload-acciones">
+          <button id="btnSeleccionarImagen" class="btn-secondary">Seleccionar imagen</button>
+          <button id="btnSubirImagen" class="btn-descargar" disabled>⬆ Subir imagen</button>
+          <button id="btnQuitarImagen" class="btn-cancelar" style="display:none;">✕ Quitar imagen</button>
+        </div>
+
+        <div id="uploadStatus" class="upload-status" style="display:none;"></div>
+      </section>
+
       <!-- BOTONES DE ACCIÓN -->
       <section class="admin-section">
         <div class="acciones-superiores">
