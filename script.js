@@ -117,7 +117,7 @@ async function cargarInfoRifa() {
 
   if (btnWhatsapp) {
     if (config.whatsapp && config.whatsapp.trim() !== "") {
-      btnWhatsapp.href         = `https://wa.me/${config.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
+      btnWhatsapp.href          = `https://wa.me/${config.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
       btnWhatsapp.style.display = "flex";
     } else {
       btnWhatsapp.href          = "#";
@@ -129,12 +129,17 @@ async function cargarInfoRifa() {
 // =============================
 // MODAL INFO
 // =============================
-function abrirInfo() {
+
+// Al abrir: primero trae datos frescos, luego muestra el modal
+async function abrirInfo() {
   const modal = document.getElementById("modalInfo");
-  if (modal) {
-    modal.classList.add("mostrar");
-    document.body.classList.add("modal-abierto");
-  }
+  if (!modal) return;
+
+  // Traer siempre los datos más recientes de Supabase antes de mostrar
+  await cargarInfoRifa();
+
+  modal.classList.add("mostrar");
+  document.body.classList.add("modal-abierto");
 }
 
 function cerrarInfo() {
@@ -171,6 +176,7 @@ supabaseClient
 
 // =============================
 // TIEMPO REAL: CONFIG_RIFA
+// (respaldo — funciona solo si Realtime está activado en Supabase para esta tabla)
 // =============================
 supabaseClient
   .channel("config_rifa_changes")
