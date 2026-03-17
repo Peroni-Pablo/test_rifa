@@ -1,75 +1,76 @@
 <!DOCTYPE html>
 <html lang="es">
-    
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rifa oficial JC hogar</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rifa oficial JC hogar</title>
 
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabaseClient.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
 </head>
 
 <body class="pagina-index">
-<div id="modalInfo" class="modal-info-pro">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
-    
-    <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
-    <!-- MODAL INFO -->
-<div id="modalInfo" class="modal-info-pro">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
+  <!-- MODAL INFO -->
+  <div id="modalInfo" class="modal-info-pro">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
+      <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
-    <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
-
-    <div class="modal-header">
-      <div class="icono-info-grande">
-        <img src="infoIcon.png" alt="Info" class="icono-modal-img">
-      </div>
-      <div>
-        <h2 id="tituloInfo">Cargando...</h2>
-        <p id="subtituloInfo" class="subtitulo-modal">Cargando información...</p>
-      </div>
-    </div>
-
-    <div class="modal-body">
-      <div class="info-item">
-        <span class="info-label">Valor del número</span>
-        <span id="infoValor" class="info-value">-</span>
+      <div class="modal-header">
+        <div class="icono-info-grande">
+          <img src="infoIcon.png" alt="Info" class="icono-modal-img">
+        </div>
+        <div>
+          <h2 id="tituloInfo">Cargando...</h2>
+          <p id="subtituloInfo" class="subtitulo-modal">Cargando información...</p>
+        </div>
       </div>
 
-      <div class="info-item">
-        <span class="info-label">Forma de pago</span>
-        <span id="infoPago" class="info-value">-</span>
+      <div class="modal-body">
+        <div class="info-item">
+          <span class="info-label">Valor del número</span>
+          <span id="infoValor" class="info-value">-</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Forma de pago</span>
+          <span id="infoPago" class="info-value">-</span>
+        </div>
+
+        <div class="aviso-extra" id="infoMensajeExtra">-</div>
       </div>
 
-      <div class="aviso-extra" id="infoMensajeExtra">-</div>
-    </div>
+      <div class="modal-footer">
+        <a
+          id="btnWhatsappInfo"
+          class="btn-whatsapp-pro"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Consultar por WhatsApp
+        </a>
 
-    <div class="modal-footer">
-      <a
-        id="btnWhatsappInfo"
-        class="btn-whatsapp-pro"
-        href="#"
-        target="_blank"
-      >
-        Consultar por WhatsApp
-      </a>
-
-      <button class="btn-cerrar-secundario" onclick="cerrarInfo()">Cerrar</button>
+        <button class="btn-cerrar-secundario" onclick="cerrarInfo()">Cerrar</button>
+      </div>
     </div>
   </div>
-</div>
 
+  <!-- GRID DE NÚMEROS -->
+  <div class="container">
+    <div class="panel">
+      <h1>Rifa oficial JC hogar</h1>
+      <div id="numeros" class="grid"></div>
+    </div>
+  </div>
 
-<div id="numeros" class="grid"></div>
-<!-- BOTON FLOTANTE DE INFO -->
-<button id="btnInfoFlotante" class="btn-info-flotante" onclick="abrirInfo()">
-  <img src="infoIcon.png" alt="Información" class="icono-info-img">
-</button>
-<script src="script.js"></script>
+  <!-- BOTÓN FLOTANTE DE INFO -->
+  <button id="btnInfoFlotante" class="btn-info-flotante" onclick="abrirInfo()">
+    <img src="infoIcon.png" alt="Información" class="icono-info-img">
+  </button>
 
+  <script src="script.js"></script>
 </body>
 </html>

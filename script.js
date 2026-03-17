@@ -1,6 +1,8 @@
 const contenedor = document.getElementById("numeros");
-const tabla = document.querySelector("#tabla tbody");
 
+// =============================
+// CARGAR NÚMEROS
+// =============================
 async function cargarNumeros() {
   const { data, error } = await supabaseClient
     .from("numeros_rifa")
@@ -13,83 +15,61 @@ async function cargarNumeros() {
     return;
   }
 
-  if (contenedor) {
-    contenedor.innerHTML = "";
+  if (!contenedor) return;
 
-    data.forEach(numero => {
-      const boton = document.createElement("button");
-      boton.textContent = numero.numero.toString().padStart(2, "0");
+  contenedor.innerHTML = "";
 
-      // Ocupado si está reservado o confirmado
-      if (numero.estado === "reservado" || numero.estado === "confirmado") {
-        boton.classList.add("ocupado");
-        boton.disabled = true;
-      } else {
-        boton.onclick = () => comprarNumero(numero.numero);
-      }
+  data.forEach(numero => {
+    const boton = document.createElement("button");
+    boton.textContent = numero.numero.toString().padStart(2, "0");
 
-      contenedor.appendChild(boton);
-    });
-  }
+    if (numero.estado === "reservado" || numero.estado === "confirmado") {
+      boton.classList.add("ocupado");
+      boton.disabled = true;
+    } else {
+      boton.onclick = () => comprarNumero(numero.numero);
+    }
 
-  if (tabla) {
-    tabla.innerHTML = "";
-
-    data.forEach(numero => {
-      const fila = document.createElement("tr");
-
-      fila.innerHTML = `
-        <td>${numero.numero.toString().padStart(2, "0")}</td>
-        <td>${numero.nombre || "-"}</td>
-        <td>${numero.estado || "libre"}</td>
-      `;
-
-      tabla.appendChild(fila);
-    });
-  }
+    contenedor.appendChild(boton);
+  });
 }
 
-// Escuchar cambios en tiempo real
-supabaseClient
-  .channel("numeros_rifa_changes")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "numeros_rifa"
-    },
-    (payload) => {
-      console.log("Cambio detectado:", payload);
-      cargarNumeros();
-    }
-  )
-  .subscribe();
-
+// =============================
+// RESERVAR NÚMERO
+// =============================
 async function comprarNumero(numero) {
   const nombre = prompt("Ingrese su nombre");
-  if (!nombre) return;
+  if (!nombre || !nombre.trim()) return;
 
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("numeros_rifa")
     .update({
-      nombre: nombre,
+      nombre: nombre.trim(),
       estado: "reservado"
     })
     .eq("numero", numero)
-    .eq("estado", "libre");
+    .eq("estado", "libre")
+    .select();
 
   if (error) {
-    console.log("ERROR SUPABASE:", error);
+    console.error("ERROR SUPABASE:", error);
     alert("No se pudo reservar el número: " + error.message);
-  } else {
-    console.log("Número reservado correctamente");
-    alert("Número reservado correctamente");
-    cargarNumeros();
+    return;
   }
+
+  if (!data || data.length === 0) {
+    alert("Ese número ya fue reservado por otra persona.");
+    cargarNumeros();
+    return;
+  }
+
+  alert(`Número ${String(numero).padStart(2, "0")} reservado correctamente`);
+  cargarNumeros();
 }
 
-
+// =============================
+// CARGAR INFO DEL MODAL
+// =============================
 async function cargarInfoRifa() {
   const { data, error } = await supabaseClient
     .from("config_rifa")
@@ -133,7 +113,9 @@ async function cargarInfoRifa() {
   }
 }
 
-
+// =============================
+// MODAL INFO
+// =============================
 function abrirInfo() {
   const modal = document.getElementById("modalInfo");
   if (modal) {
@@ -150,18 +132,61 @@ function cerrarInfo() {
   }
 }
 
-window.addEventListener("click", function(e) {
+window.abrirInfo = abrirInfo;
+window.cerrarInfo = cerrarInfo;
+
+window.addEventListener("click", function (e) {
   const modal = document.getElementById("modalInfo");
   if (e.target === modal) {
     cerrarInfo();
   }
 });
 
-window.addEventListener("keydown", function(e) {
+window.addEventListener("keydown", function (e) {
   if (e.key === "Escape") {
     cerrarInfo();
   }
 });
 
+// =============================
+// TIEMPO REAL: NUMEROS_RIFA
+// =============================
+supabaseClient
+  .channel("numeros_rifa_changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "numeros_rifa"
+    },
+    () => {
+      cargarNumeros();
+    }
+  )
+  .subscribe();
+
+// =============================
+// TIEMPO REAL: CONFIG_RIFA
+// PARA QUE EL MODAL SE ACTUALICE SOLO
+// =============================
+supabaseClient
+  .channel("config_rifa_changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "config_rifa"
+    },
+    () => {
+      cargarInfoRifa();
+    }
+  )
+  .subscribe();
+
+// =============================
+// INICIO
+// =============================
 cargarNumeros();
 cargarInfoRifa();

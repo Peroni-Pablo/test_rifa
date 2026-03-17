@@ -14,8 +14,7 @@
 
   <div class="container">
     <div class="panel panel-admin">
-      <h1>Panel Admin</h1>
-      <h2>Panel Administrador</h2>
+      <h1>Panel Administrador</h1>
 
       <div class="acciones-admin">
         <button onclick="descargarCSV()">Descargar Rifa</button>
@@ -24,28 +23,30 @@
 
       <h2>Configurar información del modal</h2>
 
-  <div class="config-rifa">
-    <input type="text" id="titulo_modal" placeholder="Título del modal">
-    <input type="text" id="subtitulo_modal" placeholder="Subtítulo del modal">
-    <input type="text" id="valor_numero" placeholder="Valor del número">
-    <input type="text" id="forma_pago" placeholder="Forma de pago">
-    <input type="text" id="whatsapp" placeholder="WhatsApp (ej: 543472123456)">
-    <textarea id="mensaje_extra" placeholder="Mensaje extra"></textarea>
+      <div class="config-rifa">
+        <input type="text" id="titulo_modal" placeholder="Título del modal">
+        <input type="text" id="subtitulo_modal" placeholder="Subtítulo del modal">
+        <input type="text" id="valor_numero" placeholder="Valor del número">
+        <input type="text" id="forma_pago" placeholder="Forma de pago">
+        <input type="text" id="whatsapp" placeholder="WhatsApp (ej: 543472123456)">
+        <textarea id="mensaje_extra" placeholder="Mensaje extra"></textarea>
 
-    <button id="guardarConfigBtn">Guardar información</button>
-  </div>
+        <button id="guardarConfigBtn">Guardar información</button>
+      </div>
+
+      <h2>Configuración guardada</h2>
 
       <div class="tabla-container">
         <table>
           <thead>
             <tr>
-              <th>Número</th>
-              <th>Nombre</th>
-              <th>Estado</th>
+              <th>ID</th>
+              <th>Valor número</th>
+              <th>Forma de pago</th>
               <th>Acciones</th>
             </tr>
           </thead>
-          <tbody id="tablaAdmin"></tbody>
+          <tbody id="tablaConfig"></tbody>
         </table>
       </div>
     </div>

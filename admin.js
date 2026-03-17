@@ -1,97 +1,17 @@
-const tablaAdmin = document.getElementById("tablaAdmin");
 const btnLimpiarLista = document.getElementById("btnLimpiarLista");
+const guardarConfigBtn = document.getElementById("guardarConfigBtn");
+const tablaConfig = document.getElementById("tablaConfig");
 
-async function cargarTablaAdmin() {
-  const { data, error } = await supabaseClient
-    .from("numeros_rifa")
-    .select("*")
-    .order("numero", { ascending: true });
-
-  if (error) {
-    console.error("Error al cargar la tabla:", error);
-    alert("Error al cargar los números de la rifa: " + error.message);
-    return;
-  }
-
-  tablaAdmin.innerHTML = "";
-
-  data.forEach(item => {
-    const fila = document.createElement("tr");
-
-    fila.innerHTML = `
-      <td>${formatearNumero(item.numero)}</td>
-      <td>${item.nombre || "-"}</td>
-      <td style="font-weight:bold; color:${obtenerColorEstado(item.estado || "libre")};">
-        ${item.estado || "libre"}
-      </td>
-      <td>
-        <button onclick="confirmarNumero('${item.numero}')">✅ Confirmar</button>
-        <button onclick="cancelarNumero('${item.numero}')">❌ Cancelar</button>
-      </td>
-    `;
-
-    tablaAdmin.appendChild(fila);
-  });
+// =============================
+// UTILIDADES
+// =============================
+function formatearNumero(numero) {
+  return String(numero).padStart(2, "0");
 }
 
-async function confirmarNumero(numero) {
-  const confirmar = confirm(`¿Querés confirmar el número ${formatearNumero(numero)}?`);
-  if (!confirmar) return;
-
-  const { data, error: errorBuscar } = await supabaseClient
-    .from("numeros_rifa")
-    .select("*")
-    .eq("numero", numero)
-    .single();
-
-  if (errorBuscar) {
-    console.error("Error al buscar número:", errorBuscar);
-    alert("No se pudo buscar el número: " + errorBuscar.message);
-    return;
-  }
-
-  if (!data.nombre || data.estado === "libre") {
-    alert("No podés confirmar un número que está libre.");
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from("numeros_rifa")
-    .update({ estado: "confirmado" })
-    .eq("numero", numero);
-
-  if (error) {
-    console.error("Error al confirmar número:", error);
-    alert("No se pudo confirmar el número: " + error.message);
-    return;
-  }
-
-  alert(`Número ${formatearNumero(numero)} confirmado correctamente.`);
-  cargarTablaAdmin();
-}
-
-async function cancelarNumero(numero) {
-  const confirmar = confirm(`¿Querés cancelar/liberar el número ${formatearNumero(numero)}?`);
-  if (!confirmar) return;
-
-  const { error } = await supabaseClient
-    .from("numeros_rifa")
-    .update({
-      nombre: null,
-      estado: "libre"
-    })
-    .eq("numero", numero);
-
-  if (error) {
-    console.error("Error al cancelar número:", error);
-    alert("No se pudo cancelar el número: " + error.message);
-    return;
-  }
-
-  alert(`Número ${formatearNumero(numero)} liberado correctamente.`);
-  cargarTablaAdmin();
-}
-
+// =============================
+// RIFA: LIMPIAR LISTA
+// =============================
 if (btnLimpiarLista) {
   btnLimpiarLista.addEventListener("click", async () => {
     const confirmar = confirm("¿Seguro que querés limpiar TODA la lista de la rifa?");
@@ -112,10 +32,12 @@ if (btnLimpiarLista) {
     }
 
     alert("Lista limpiada correctamente.");
-    cargarTablaAdmin();
   });
 }
 
+// =============================
+// RIFA: DESCARGAR CSV
+// =============================
 async function descargarCSV() {
   const { data, error } = await supabaseClient
     .from("numeros_rifa")
@@ -128,10 +50,8 @@ async function descargarCSV() {
     return;
   }
 
-  // Encabezados
   let csv = "indice;numero;nombre;estado\n";
 
-  // Filas
   data.forEach((item, index) => {
     const indice = index + 1;
     const numero = String(item.numero).padStart(2, "0");
@@ -141,16 +61,13 @@ async function descargarCSV() {
     csv += `${indice};${numero};${nombre};${estado}\n`;
   });
 
-  // BOM para que Excel lea bien acentos/ñ
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
 
-  // Nombre del archivo con fecha
   const hoy = new Date();
   const fecha = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
-  
+
   link.setAttribute("href", url);
   link.setAttribute("download", `rifa_${fecha}.csv`);
   link.style.visibility = "hidden";
@@ -162,51 +79,40 @@ async function descargarCSV() {
   URL.revokeObjectURL(url);
 }
 
-function obtenerColorEstado(estado) {
-  switch (estado) {
-    case "libre":
-      return "green";
-    case "reservado":
-      return "orange";
-    case "confirmado":
-      return "red";
-    default:
-      return "black";
-  }
-}
+window.descargarCSV = descargarCSV;
 
-function formatearNumero(numero) {
-  return String(numero).padStart(2, "0");
-}
-
-window.confirmarNumero = confirmarNumero;
-window.cancelarNumero = cancelarNumero;
-
-cargarTablaAdmin();
-
+// =============================
+// CONFIG RIFA: CARGAR FORMULARIO
+// =============================
 async function cargarConfiguracionRifa() {
   const { data, error } = await supabaseClient
     .from("config_rifa")
     .select("*")
-    .limit(1)
-    .single();
+    .order("id", { ascending: true })
+    .limit(1);
 
   if (error) {
     console.error("Error al cargar configuración:", error);
     return;
   }
 
-  document.getElementById("titulo_modal").value = data.titulo_modal || "";
-  document.getElementById("subtitulo_modal").value = data.subtitulo_modal || "";
-  document.getElementById("valor_numero").value = data.valor_numero || "";
-  document.getElementById("forma_pago").value = data.forma_pago || "";
-  document.getElementById("whatsapp").value = data.whatsapp || "";
-  document.getElementById("mensaje_extra").value = data.mensaje_extra || "";
+  if (!data || data.length === 0) {
+    return;
+  }
+
+  const config = data[0];
+
+  document.getElementById("titulo_modal").value = config.titulo_modal || "";
+  document.getElementById("subtitulo_modal").value = config.subtitulo_modal || "";
+  document.getElementById("valor_numero").value = config.valor_numero || "";
+  document.getElementById("forma_pago").value = config.forma_pago || "";
+  document.getElementById("whatsapp").value = config.whatsapp || "";
+  document.getElementById("mensaje_extra").value = config.mensaje_extra || "";
 }
 
-
-cargarConfiguracionRifa();
-
+// =============================
+// CONFIG RIFA: GUARDAR
+// =============================
 async function guardarConfiguracionRifa() {
   const titulo_modal = document.getElementById("titulo_modal").value.trim();
   const subtitulo_modal = document.getElementById("subtitulo_modal").value.trim();
@@ -215,7 +121,6 @@ async function guardarConfiguracionRifa() {
   const whatsapp = document.getElementById("whatsapp").value.trim();
   const mensaje_extra = document.getElementById("mensaje_extra").value.trim();
 
-  // 1) Buscar si ya existe una fila
   const { data: existentes, error: errorBuscar } = await supabaseClient
     .from("config_rifa")
     .select("id")
@@ -224,13 +129,12 @@ async function guardarConfiguracionRifa() {
 
   if (errorBuscar) {
     console.error("Error al buscar configuración:", errorBuscar);
-    alert("No se pudo guardar la información.");
+    alert("No se pudo guardar la información: " + errorBuscar.message);
     return;
   }
 
   let errorGuardar = null;
 
-  // 2) Si existe, actualiza
   if (existentes && existentes.length > 0) {
     const idConfig = existentes[0].id;
 
@@ -247,9 +151,7 @@ async function guardarConfiguracionRifa() {
       .eq("id", idConfig);
 
     errorGuardar = error;
-  } 
-  // 3) Si no existe, inserta
-  else {
+  } else {
     const { error } = await supabaseClient
       .from("config_rifa")
       .insert([{
@@ -266,16 +168,101 @@ async function guardarConfiguracionRifa() {
 
   if (errorGuardar) {
     console.error("Error al guardar configuración:", errorGuardar);
-    alert("No se pudo guardar la información.");
+    alert("No se pudo guardar la información: " + errorGuardar.message);
     return;
   }
 
   alert("Los cambios han sido guardados correctamente");
+  await cargarConfiguracionRifa();
+  await cargarTablaConfig();
 }
-
-const guardarConfigBtn = document.getElementById("guardarConfigBtn");
 
 if (guardarConfigBtn) {
   guardarConfigBtn.addEventListener("click", guardarConfiguracionRifa);
 }
 
+// =============================
+// TABLA CONFIG_RIFA
+// SOLO: id, valor_numero, forma_pago, acciones
+// =============================
+async function cargarTablaConfig() {
+  if (!tablaConfig) return;
+
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("id, valor_numero, forma_pago")
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Error al cargar tabla config:", error);
+    tablaConfig.innerHTML = `
+      <tr>
+        <td colspan="4">Error al cargar configuración</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tablaConfig.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    tablaConfig.innerHTML = `
+      <tr>
+        <td colspan="4">No hay configuración guardada todavía.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  data.forEach(item => {
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.valor_numero || "-"}</td>
+      <td>${item.forma_pago || "-"}</td>
+      <td>
+        <button onclick="editarConfig(${item.id})">✏️ Editar</button>
+      </td>
+    `;
+
+    tablaConfig.appendChild(fila);
+  });
+}
+
+// =============================
+// EDITAR CONFIG DESDE TABLA
+// =============================
+async function editarConfig(id) {
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error al cargar configuración para editar:", error);
+    alert("No se pudo cargar la configuración para editar.");
+    return;
+  }
+
+  document.getElementById("titulo_modal").value = data.titulo_modal || "";
+  document.getElementById("subtitulo_modal").value = data.subtitulo_modal || "";
+  document.getElementById("valor_numero").value = data.valor_numero || "";
+  document.getElementById("forma_pago").value = data.forma_pago || "";
+  document.getElementById("whatsapp").value = data.whatsapp || "";
+  document.getElementById("mensaje_extra").value = data.mensaje_extra || "";
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+window.editarConfig = editarConfig;
+
+// =============================
+// INICIO
+// =============================
+cargarConfiguracionRifa();
+cargarTablaConfig();
