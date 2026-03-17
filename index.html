@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rifa oficial JC hogar</title>
 
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="style.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>
@@ -14,7 +14,7 @@
 <body class="pagina-index">
 
   <!-- MODAL INFO -->
-  <div id="modalInfo" class="modal-info-pro">
+  <div id="modalInfo" class="modal-info-pro" onclick="cerrarAlClickearFondo(event)">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tituloInfo">
       <button class="btn-cerrar-pro" onclick="cerrarInfo()">✕</button>
 
@@ -61,7 +61,7 @@
   <!-- GRID DE NÚMEROS -->
   <div class="container">
     <div class="panel">
-    <div id="numeros" class="grid"></div>
+      <div id="numeros" class="grid"></div>
     </div>
   </div>
 
@@ -71,5 +71,15 @@
   </button>
 
   <script src="script.js"></script>
+
+  <script>
+    // Cerrar modal al hacer click fuera de la card
+    function cerrarAlClickearFondo(event) {
+      if (event.target === document.getElementById('modalInfo')) {
+        cerrarInfo();
+      }
+    }
+  </script>
+
 </body>
 </html>

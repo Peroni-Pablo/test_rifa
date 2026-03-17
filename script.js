@@ -1,6 +1,17 @@
 const contenedor = document.getElementById("numeros");
 
 // =============================
+// NORMALIZAR ESTADOS
+// =============================
+function normalizarEstado(estado) {
+  if (!estado) return "libre";
+  const e = estado.toLowerCase().trim();
+  if (e === "reservado" || e === "pendiente") return "pendiente";
+  if (e === "vendido"   || e === "confirmado") return "confirmado";
+  return "libre";
+}
+
+// =============================
 // CARGAR NÚMEROS
 // =============================
 async function cargarNumeros() {
@@ -23,11 +34,13 @@ async function cargarNumeros() {
     const boton = document.createElement("button");
     boton.textContent = numero.numero.toString().padStart(2, "0");
 
-    if (numero.estado === "reservado" || numero.estado === "confirmado") {
-      boton.classList.add("ocupado");
-      boton.disabled = true;
-    } else {
+    const estado = normalizarEstado(numero.estado);
+    boton.classList.add(estado);
+
+    if (estado === "libre") {
       boton.onclick = () => comprarNumero(numero.numero);
+    } else {
+      boton.disabled = true;
     }
 
     contenedor.appendChild(boton);
@@ -45,7 +58,7 @@ async function comprarNumero(numero) {
     .from("numeros_rifa")
     .update({
       nombre: nombre.trim(),
-      estado: "reservado"
+      estado: "pendiente"
     })
     .eq("numero", numero)
     .eq("estado", "libre")
@@ -89,25 +102,25 @@ async function cargarInfoRifa() {
 
   const config = data[0];
 
-  const tituloInfo = document.getElementById("tituloInfo");
-  const subtituloInfo = document.getElementById("subtituloInfo");
-  const infoValor = document.getElementById("infoValor");
-  const infoPago = document.getElementById("infoPago");
+  const tituloInfo       = document.getElementById("tituloInfo");
+  const subtituloInfo    = document.getElementById("subtituloInfo");
+  const infoValor        = document.getElementById("infoValor");
+  const infoPago         = document.getElementById("infoPago");
   const infoMensajeExtra = document.getElementById("infoMensajeExtra");
-  const btnWhatsapp = document.getElementById("btnWhatsappInfo");
+  const btnWhatsapp      = document.getElementById("btnWhatsappInfo");
 
-  if (tituloInfo) tituloInfo.textContent = config.titulo_modal || "Información de la Rifa";
-  if (subtituloInfo) subtituloInfo.textContent = config.subtitulo_modal || "";
-  if (infoValor) infoValor.textContent = config.valor_numero || "-";
-  if (infoPago) infoPago.textContent = config.forma_pago || "-";
-  if (infoMensajeExtra) infoMensajeExtra.textContent = config.mensaje_extra || "-";
+  if (tituloInfo)       tituloInfo.textContent       = config.titulo_modal    || "Información de la Rifa";
+  if (subtituloInfo)    subtituloInfo.textContent    = config.subtitulo_modal || "";
+  if (infoValor)        infoValor.textContent        = config.valor_numero    || "-";
+  if (infoPago)         infoPago.textContent         = config.forma_pago      || "-";
+  if (infoMensajeExtra) infoMensajeExtra.textContent = config.mensaje_extra   || "-";
 
   if (btnWhatsapp) {
     if (config.whatsapp && config.whatsapp.trim() !== "") {
-      btnWhatsapp.href = `https://wa.me/${config.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
+      btnWhatsapp.href         = `https://wa.me/${config.whatsapp}?text=Hola%20quiero%20consultar%20por%20la%20rifa`;
       btnWhatsapp.style.display = "flex";
     } else {
-      btnWhatsapp.href = "#";
+      btnWhatsapp.href          = "#";
       btnWhatsapp.style.display = "none";
     }
   }
@@ -132,20 +145,18 @@ function cerrarInfo() {
   }
 }
 
-window.abrirInfo = abrirInfo;
+window.abrirInfo  = abrirInfo;
 window.cerrarInfo = cerrarInfo;
 
+// Cerrar al click en el fondo
 window.addEventListener("click", function (e) {
   const modal = document.getElementById("modalInfo");
-  if (e.target === modal) {
-    cerrarInfo();
-  }
+  if (e.target === modal) cerrarInfo();
 });
 
+// Cerrar con Escape
 window.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") {
-    cerrarInfo();
-  }
+  if (e.key === "Escape") cerrarInfo();
 });
 
 // =============================
@@ -153,36 +164,19 @@ window.addEventListener("keydown", function (e) {
 // =============================
 supabaseClient
   .channel("numeros_rifa_changes")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "numeros_rifa"
-    },
-    () => {
-      cargarNumeros();
-    }
-  )
+  .on("postgres_changes", { event: "*", schema: "public", table: "numeros_rifa" }, () => {
+    cargarNumeros();
+  })
   .subscribe();
 
 // =============================
 // TIEMPO REAL: CONFIG_RIFA
-// PARA QUE EL MODAL SE ACTUALICE SOLO
 // =============================
 supabaseClient
   .channel("config_rifa_changes")
-  .on(
-    "postgres_changes",
-    {
-      event: "*",
-      schema: "public",
-      table: "config_rifa"
-    },
-    () => {
-      cargarInfoRifa();
-    }
-  )
+  .on("postgres_changes", { event: "*", schema: "public", table: "config_rifa" }, () => {
+    cargarInfoRifa();
+  })
   .subscribe();
 
 // =============================
