@@ -12,9 +12,43 @@ function normalizarEstado(estado) {
 }
 
 // =============================
+// BLOQUEO — fuente de verdad
+// Siempre consulta Supabase y devuelve true/false
+// =============================
+async function cargarBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    console.log("[bloqueo] data:", data, "| error:", error);
+
+    if (error) {
+      console.warn("[bloqueo] Error al leer config_rifa:", error.message);
+      return false;
+    }
+    if (!data) {
+      console.warn("[bloqueo] No se encontró la fila id=1 en config_rifa");
+      return false;
+    }
+
+    console.log("[bloqueo] valor:", data.bloqueado, "| tipo:", typeof data.bloqueado);
+    return data.bloqueado === true;
+
+  } catch (err) {
+    console.error("[bloqueo] Error inesperado:", err);
+    return false;
+  }
+}
+
+// =============================
 // CARGAR NÚMEROS
 // =============================
 async function cargarNumeros() {
+  const bloqueado = await cargarBloqueo();
+
   const { data, error } = await supabaseClient
     .from("numeros_rifa")
     .select("*")
@@ -37,10 +71,13 @@ async function cargarNumeros() {
     const estado = normalizarEstado(numero.estado);
     boton.classList.add(estado);
 
-    if (estado === "libre") {
+    if (estado === "libre" && !bloqueado) {
       boton.onclick = () => comprarNumero(numero.numero);
     } else {
       boton.disabled = true;
+      if (estado === "libre" && bloqueado) {
+        boton.title = "La selección de números está temporalmente deshabilitada.";
+      }
     }
 
     contenedor.appendChild(boton);
@@ -51,14 +88,35 @@ async function cargarNumeros() {
 // RESERVAR NÚMERO
 // =============================
 async function comprarNumero(numero) {
-  const nombre = prompt("Ingrese su nombre");
+  // Verificar bloqueo en tiempo real antes de cualquier acción
+  const bloqueado = await cargarBloqueo();
+  if (bloqueado) {
+    alert("La selección de números está temporalmente deshabilitada.");
+    await cargarNumeros();
+    return;
+  }
+
+  // Pedir nombre
+  const nombre = prompt("Ingrese su nombre:");
   if (!nombre || !nombre.trim()) return;
+
+  // Pedir teléfono
+  const telefono = prompt("Ingrese su número de teléfono (10 dígitos):");
+  if (telefono === null) return;
+
+  // Validar: exactamente 10 dígitos numéricos
+  const soloNumeros = telefono.trim().replace(/\s/g, "");
+  if (!/^\d{10}$/.test(soloNumeros)) {
+    alert("Ingrese un número de teléfono válido (exactamente 10 dígitos numéricos).");
+    return;
+  }
 
   const { data, error } = await supabaseClient
     .from("numeros_rifa")
     .update({
-      nombre: nombre.trim(),
-      estado: "pendiente"
+      nombre:   nombre.trim(),
+      telefono: soloNumeros,
+      estado:   "pendiente"
     })
     .eq("numero", numero)
     .eq("estado", "libre")
@@ -137,19 +195,27 @@ async function cargarBanner() {
       .eq("id", 1)
       .single();
 
-    if (error || !data?.imagen_url) return; // sin imagen: no muestra nada
+    if (error) {
+      console.warn("cargarBanner: error al leer config_rifa →", error.message);
+      return;
+    }
 
-    const banner   = document.getElementById("bannerPresentacion");
+    if (!data?.imagen_url) {
+      console.info("cargarBanner: no hay imagen_url guardada.");
+      return;
+    }
+
+    const banner    = document.getElementById("bannerPresentacion");
     const bannerImg = document.getElementById("bannerImg");
 
     if (!banner || !bannerImg) return;
 
-    bannerImg.src         = data.imagen_url;
-    banner.style.display  = "flex";
+    bannerImg.src        = data.imagen_url + "?t=" + Date.now();
+    banner.style.display = "flex";
     document.body.classList.add("banner-abierto");
 
   } catch (err) {
-    console.error("Error al cargar banner:", err);
+    console.error("cargarBanner: error inesperado →", err);
   }
 }
 
@@ -174,7 +240,7 @@ async function abrirInfo() {
   const modal = document.getElementById("modalInfo");
   if (!modal) return;
 
-  await cargarInfoRifa(); // siempre trae datos frescos
+  await cargarInfoRifa();
 
   modal.classList.add("mostrar");
   document.body.classList.add("modal-abierto");
@@ -220,6 +286,7 @@ supabaseClient
   .channel("config_rifa_changes")
   .on("postgres_changes", { event: "*", schema: "public", table: "config_rifa" }, () => {
     cargarInfoRifa();
+    cargarNumeros(); // re-renderiza con el estado de bloqueo actualizado
   })
   .subscribe();
 
@@ -228,4 +295,4 @@ supabaseClient
 // =============================
 cargarNumeros();
 cargarInfoRifa();
-cargarBanner();   // muestra la imagen apenas carga la página
+cargarBanner();

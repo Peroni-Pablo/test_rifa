@@ -1,11 +1,96 @@
+// =========================
+// LOGIN
+// =========================
+const SESSION_KEY = "rifa_admin_ok";
+
+async function verificarPassword(intento) {
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("password_admin")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data?.password_admin) return false;
+  return intento === data.password_admin;
+}
+
+function estaAutenticado() {
+  return sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
+function mostrarPanel() {
+  document.getElementById("pantallaLogin").style.display = "none";
+  document.getElementById("panelAdmin").style.display    = "block";
+}
+
+function mostrarLogin() {
+  document.getElementById("pantallaLogin").style.display = "flex";
+  document.getElementById("panelAdmin").style.display    = "none";
+}
+
+async function intentarLogin() {
+  const pass  = document.getElementById("inputPassword").value;
+  const error = document.getElementById("loginError");
+  const btn   = document.getElementById("btnLogin");
+
+  if (!pass.trim()) return;
+
+  btn.disabled     = true;
+  btn.textContent  = "Verificando...";
+  error.style.display = "none";
+
+  const ok = await verificarPassword(pass.trim());
+
+  if (ok) {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    mostrarPanel();
+    iniciarAdmin();
+  } else {
+    error.style.display = "block";
+    btn.disabled    = false;
+    btn.textContent = "Ingresar";
+  }
+}
+
+// Enter en el input de password dispara login
+document.getElementById("inputPassword").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") intentarLogin();
+});
+
+document.getElementById("btnLogin").addEventListener("click", intentarLogin);
+
+// Mostrar/ocultar contraseña
+document.getElementById("btnVerPass").addEventListener("click", () => {
+  const input = document.getElementById("inputPassword");
+  input.type  = input.type === "password" ? "text" : "password";
+});
+
+// Cerrar sesión
+document.getElementById("btnCerrarSesion").addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById("inputPassword").value = "";
+  mostrarLogin();
+});
+
+// Al cargar la página: si ya hay sesión activa, ir directo al panel
+if (estaAutenticado()) {
+  mostrarPanel();
+  iniciarAdmin();
+} else {
+  mostrarLogin();
+}
+
+// =========================
+// VARIABLES DEL PANEL
+// =========================
 const tablaAdmin = document.getElementById("tablaAdmin");
 
-const tituloModalInput = document.getElementById("tituloModalInput");
+const tituloModalInput    = document.getElementById("tituloModalInput");
 const subtituloModalInput = document.getElementById("subtituloModalInput");
-const valorNumeroInput = document.getElementById("valorNumeroInput");
-const formaPagoInput = document.getElementById("formaPagoInput");
-const whatsappInput = document.getElementById("whatsappInput");
-const mensajeExtraInput = document.getElementById("mensajeExtraInput");
+const valorNumeroInput    = document.getElementById("valorNumeroInput");
+const formaPagoInput      = document.getElementById("formaPagoInput");
+const whatsappInput       = document.getElementById("whatsappInput");
+const mensajeExtraInput   = document.getElementById("mensajeExtraInput");
 
 const btnGuardarConfig = document.getElementById("btnGuardarConfig");
 const btnLimpiarGrilla = document.getElementById("btnLimpiarGrilla");
@@ -129,6 +214,7 @@ async function cargarTablaAdmin() {
       fila.innerHTML = `
         <td>${String(item.numero).padStart(2, "0")}</td>
         <td>${item.nombre || "-"}</td>
+        <td>${item.telefono || "-"}</td>
         <td>
           <span class="estado-badge ${estado}">${estado}</span>
         </td>
@@ -178,8 +264,9 @@ async function cancelarNumero(numero) {
     const { error } = await supabaseClient
       .from("numeros_rifa")
       .update({
-        nombre: null,
-        estado: "libre"
+        nombre:   null,
+        telefono: null,
+        estado:   "libre"
       })
       .eq("numero", numero);
 
@@ -210,8 +297,9 @@ async function limpiarGrillaEntera() {
     const { error } = await supabaseClient
       .from("numeros_rifa")
       .update({
-        nombre: null,
-        estado: "libre"
+        nombre:   null,
+        telefono: null,
+        estado:   "libre"
       })
       .neq("numero", -1);
 
@@ -374,54 +462,74 @@ function previsualizarArchivo(file) {
 async function subirImagen() {
   if (!archivoSeleccionado) return;
 
-  btnSubirImagen.disabled  = true;
+  btnSubirImagen.disabled    = true;
   btnSubirImagen.textContent = "Subiendo...";
   mostrarStatus("Subiendo imagen...", "info");
 
   try {
-    // 1. Subir al bucket (upsert = sobreescribe si ya existe)
+    // 1. Usar extensión real del archivo para evitar problemas de tipo
+    const ext        = archivoSeleccionado.name.split(".").pop().toLowerCase() || "jpg";
+    const storagePath = "presentacion/banner." + ext;
+
+    // 2. Subir al bucket (upsert = sobreescribe si ya existe)
     const { error: uploadError } = await supabaseClient.storage
       .from(STORAGE_BUCKET)
-      .upload(STORAGE_PATH, archivoSeleccionado, {
+      .upload(storagePath, archivoSeleccionado, {
         upsert: true,
         contentType: archivoSeleccionado.type
       });
 
     if (uploadError) {
-      mostrarStatus("Error al subir la imagen: " + uploadError.message, "error");
-      btnSubirImagen.disabled  = false;
+      const msg = "Error al subir al Storage: " + uploadError.message;
+      mostrarStatus(msg, "error");
+      alert("❌ " + msg);
+      btnSubirImagen.disabled    = false;
       btnSubirImagen.textContent = "⬆ Subir imagen";
       return;
     }
 
-    // 2. Obtener URL pública
+    // 3. Obtener URL pública SIN cache-bust (se agrega al mostrar, no al guardar)
     const { data: urlData } = supabaseClient.storage
       .from(STORAGE_BUCKET)
-      .getPublicUrl(STORAGE_PATH);
+      .getPublicUrl(storagePath);
 
-    // Forzar cache-bust para que index siempre cargue la nueva imagen
-    const urlFinal = urlData.publicUrl + "?t=" + Date.now();
+    const urlBase = urlData.publicUrl;
 
-    // 3. Guardar URL en config_rifa
-    const { error: dbError } = await supabaseClient
-      .from("config_rifa")
-      .upsert({ id: 1, imagen_url: urlFinal });
-
-    if (dbError) {
-      mostrarStatus("Imagen subida pero no se pudo guardar la URL: " + dbError.message, "error");
+    if (!urlBase) {
+      const msg = "No se pudo obtener la URL pública. ¿El bucket es público?";
+      mostrarStatus(msg, "error");
+      alert("❌ " + msg);
+      btnSubirImagen.disabled    = false;
+      btnSubirImagen.textContent = "⬆ Subir imagen";
       return;
     }
 
+    // 4. Guardar URL limpia en config_rifa
+    const { error: dbError } = await supabaseClient
+      .from("config_rifa")
+      .upsert({ id: 1, imagen_url: urlBase });
+
+    if (dbError) {
+      const msg = "Imagen subida al Storage pero no se pudo guardar la URL en la base de datos: " + dbError.message;
+      mostrarStatus(msg, "error");
+      alert("❌ " + msg);
+      return;
+    }
+
+    // 5. Todo OK
     mostrarStatus("✓ Imagen subida y guardada correctamente.", "ok");
-    btnSubirImagen.textContent = "⬆ Subir imagen";
-    btnQuitarImagen.style.display = "inline-block";
-    archivoSeleccionado = null;
-    btnSubirImagen.disabled = true;
+    alert("✅ Imagen subida correctamente. Ya aparecerá en el index.");
+    btnSubirImagen.textContent        = "⬆ Subir imagen";
+    btnQuitarImagen.style.display     = "inline-block";
+    archivoSeleccionado               = null;
+    btnSubirImagen.disabled           = true;
 
   } catch (err) {
     console.error("Error inesperado al subir imagen:", err);
-    mostrarStatus("Ocurrió un error inesperado.", "error");
-    btnSubirImagen.disabled  = false;
+    const msg = "Error inesperado: " + err.message;
+    mostrarStatus(msg, "error");
+    alert("❌ " + msg);
+    btnSubirImagen.disabled    = false;
     btnSubirImagen.textContent = "⬆ Subir imagen";
   }
 }
@@ -524,3 +632,185 @@ if (btnQuitarImagen) {
 
 // Cargar imagen actual al iniciar el admin
 cargarImagenActual();
+
+// =========================
+// CAMBIAR CONTRASEÑA
+// =========================
+async function cambiarPassword() {
+  const actual    = document.getElementById("passActualInput").value.trim();
+  const nueva     = document.getElementById("passNuevaInput").value.trim();
+  const confirmar = document.getElementById("passConfirmarInput").value.trim();
+
+  if (!actual || !nueva || !confirmar) {
+    alert("Completá todos los campos.");
+    return;
+  }
+
+  if (nueva !== confirmar) {
+    alert("La contraseña nueva y la confirmación no coinciden.");
+    return;
+  }
+
+  if (nueva.length < 6) {
+    alert("La contraseña nueva debe tener al menos 6 caracteres.");
+    return;
+  }
+
+  // Verificar que la contraseña actual sea correcta
+  const ok = await verificarPassword(actual);
+  if (!ok) {
+    alert("La contraseña actual es incorrecta.");
+    return;
+  }
+
+  // Guardar la nueva contraseña
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ password_admin: nueva })
+    .eq("id", 1);
+
+  if (error) {
+    alert("Error al cambiar la contraseña: " + error.message);
+    return;
+  }
+
+  alert("✅ Contraseña cambiada correctamente.");
+  document.getElementById("passActualInput").value    = "";
+  document.getElementById("passNuevaInput").value     = "";
+  document.getElementById("passConfirmarInput").value = "";
+}
+
+document.getElementById("btnCambiarPass").addEventListener("click", cambiarPassword);
+
+// =========================
+// BLOQUEAR / DESBLOQUEAR NÚMEROS
+// =========================
+const btnBloquear = document.getElementById("btnBloquear");
+
+async function cargarEstadoBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    if (error) return;
+
+    actualizarBotonBloqueo(data.bloqueado === true);
+  } catch (err) {
+    console.error("Error al cargar estado de bloqueo:", err);
+  }
+}
+
+function actualizarBotonBloqueo(estaBloqueado) {
+  if (!btnBloquear) return;
+
+  if (estaBloqueado) {
+    btnBloquear.textContent = "🔓 Desbloquear números";
+    btnBloquear.className   = "btn-desbloquear";
+  } else {
+    btnBloquear.textContent = "🔒 Bloquear números";
+    btnBloquear.className   = "btn-bloquear";
+  }
+
+  btnBloquear.dataset.bloqueado = estaBloqueado ? "1" : "0";
+}
+
+async function toggleBloqueo() {
+  const estaBloqueado = btnBloquear.dataset.bloqueado === "1";
+  const nuevoEstado   = !estaBloqueado;
+
+  const accion = nuevoEstado ? "bloquear" : "desbloquear";
+  const confirmar = window.confirm(`¿Seguro que querés ${accion} la selección de números?`);
+  if (!confirmar) return;
+
+  btnBloquear.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ bloqueado: nuevoEstado })
+    .eq("id", 1);
+
+  if (error) {
+    alert("No se pudo cambiar el estado: " + error.message);
+    btnBloquear.disabled = false;
+    return;
+  }
+
+  actualizarBotonBloqueo(nuevoEstado);
+  btnBloquear.disabled = false;
+  alert(nuevoEstado
+    ? "🔒 Números bloqueados. Los usuarios no pueden seleccionar."
+    : "🔓 Números desbloqueados. Los usuarios pueden seleccionar."
+  );
+}
+
+if (btnBloquear) {
+  btnBloquear.addEventListener("click", toggleBloqueo);
+}
+
+cargarEstadoBloqueo();
+
+
+async function cargarEstadoBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    if (error) return;
+
+    actualizarBotonBloqueo(data.bloqueado);
+  } catch (err) {
+    console.error("Error al cargar estado de bloqueo:", err);
+  }
+}
+
+function actualizarBotonBloqueo(bloqueado) {
+  if (!btnBloquear) return;
+
+  if (bloqueado) {
+    btnBloquear.textContent = "🔓 Desbloquear números";
+    btnBloquear.className   = "btn-desbloquear";
+  } else {
+    btnBloquear.textContent = "🔒 Bloquear números";
+    btnBloquear.className   = "btn-bloquear";
+  }
+
+  btnBloquear.dataset.bloqueado = bloqueado ? "1" : "0";
+}
+
+async function toggleBloqueo() {
+  const estaBloqueado = btnBloquear.dataset.bloqueado === "1";
+  const nuevoEstado   = !estaBloqueado;
+
+  btnBloquear.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ bloqueado: nuevoEstado })
+    .eq("id", 1);
+
+  if (error) {
+    alert("No se pudo cambiar el estado: " + error.message);
+    btnBloquear.disabled = false;
+    return;
+  }
+
+  actualizarBotonBloqueo(nuevoEstado);
+  btnBloquear.disabled = false;
+
+  alert(nuevoEstado
+    ? "🔒 Grilla bloqueada. Los usuarios no pueden seleccionar números."
+    : "🔓 Grilla desbloqueada. Los usuarios pueden seleccionar números."
+  );
+}
+
+if (btnBloquear) {
+  btnBloquear.addEventListener("click", toggleBloqueo);
+}
+
+cargarEstadoBloqueo();

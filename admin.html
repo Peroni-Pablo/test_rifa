@@ -12,103 +12,154 @@
 </head>
 <body>
 
-  <div class="container">
-    <div class="panel">
-      <h1>Panel Administrador</h1>
-      <p class="subtitulo">Gestioná la configuración y los números de la rifa</p>
+  <!-- PANTALLA DE LOGIN -->
+  <div id="pantallaLogin" class="login-overlay">
+    <div class="login-card">
+      <h2 class="login-titulo">Panel Administrador</h2>
+      <p class="login-subtitulo">Ingresá la contraseña para continuar</p>
 
-      <!-- CONFIGURACIÓN -->
-      <section class="admin-section">
-        <h2>Configuración del modal / información</h2>
+      <div class="form-group">
+        <label for="inputPassword">Contraseña</label>
+        <div class="password-wrapper">
+          <input type="password" id="inputPassword" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="btn-ver-pass" id="btnVerPass">👁</button>
+        </div>
+      </div>
 
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="tituloModalInput">Título del modal</label>
-            <input type="text" id="tituloModalInput" placeholder="Ej: Reservar número">
+      <button id="btnLogin" class="btn-guardar" style="width:100%; margin-top:8px;">Ingresar</button>
+      <p id="loginError" class="login-error" style="display:none;">Contraseña incorrecta. Intentá de nuevo.</p>
+    </div>
+  </div>
+
+  <!-- PANEL ADMIN (oculto hasta autenticar) -->
+  <div id="panelAdmin" style="display:none;">
+    <div class="container">
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h1>Panel Administrador</h1>
+            <p class="subtitulo">Gestioná la configuración y los números de la rifa</p>
           </div>
-
-          <div class="form-group">
-            <label for="subtituloModalInput">Subtítulo del modal</label>
-            <input type="text" id="subtituloModalInput" placeholder="Ej: Completá tus datos para reservar">
-          </div>
-
-          <div class="form-group">
-            <label for="valorNumeroInput">Valor del número</label>
-            <input type="text" id="valorNumeroInput" placeholder="Ej: 2500">
-          </div>
-
-          <div class="form-group">
-            <label for="formaPagoInput">Forma de pago</label>
-            <input type="text" id="formaPagoInput" placeholder="Ej: Transferencia / Efectivo">
-          </div>
-
-          <div class="form-group">
-            <label for="whatsappInput">WhatsApp (con característica)</label>
-            <input type="text" id="whatsappInput" placeholder="Ej: 5493472123456">
-          </div>
-
-          <div class="form-group full-width">
-            <label for="mensajeExtraInput">Mensaje extra</label>
-            <textarea id="mensajeExtraInput" rows="3" placeholder="Ej: Enviame el comprobante luego de reservar."></textarea>
-          </div>
+          <button id="btnCerrarSesion" class="btn-secondary">Cerrar sesión</button>
         </div>
 
-        <button id="btnGuardarConfig" class="btn-guardar">Guardar información</button>
-      </section>
+        <!-- CONFIGURACIÓN -->
+        <section class="admin-section">
+          <h2>Configuración del modal / información</h2>
 
-      <!-- IMAGEN DE PRESENTACIÓN -->
-      <section class="admin-section">
-        <h2>Imagen de presentación</h2>
-        <p class="admin-hint">Esta imagen aparece automáticamente cuando el usuario entra al índice.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="tituloModalInput">Título del modal</label>
+              <input type="text" id="tituloModalInput" placeholder="Ej: Reservar número">
+            </div>
 
-        <div class="upload-area" id="uploadArea">
-          <div id="previewActual" class="preview-actual" style="display:none;">
-            <img id="imgPreviewActual" src="" alt="Imagen actual">
-            <span class="preview-label">Imagen actual</span>
+            <div class="form-group">
+              <label for="subtituloModalInput">Subtítulo del modal</label>
+              <input type="text" id="subtituloModalInput" placeholder="Ej: Completá tus datos para reservar">
+            </div>
+
+            <div class="form-group">
+              <label for="valorNumeroInput">Valor del número</label>
+              <input type="text" id="valorNumeroInput" placeholder="Ej: 2500">
+            </div>
+
+            <div class="form-group">
+              <label for="formaPagoInput">Forma de pago</label>
+              <input type="text" id="formaPagoInput" placeholder="Ej: Transferencia / Efectivo">
+            </div>
+
+            <div class="form-group">
+              <label for="whatsappInput">WhatsApp (con característica)</label>
+              <input type="text" id="whatsappInput" placeholder="Ej: 5493472123456">
+            </div>
+
+            <div class="form-group full-width">
+              <label for="mensajeExtraInput">Mensaje extra</label>
+              <textarea id="mensajeExtraInput" rows="3" placeholder="Ej: Enviame el comprobante luego de reservar."></textarea>
+            </div>
           </div>
-          <div class="upload-placeholder" id="uploadPlaceholder">
-            <span class="upload-icon">🖼️</span>
-            <span>Arrastrá una imagen o hacé click para seleccionar</span>
-            <span class="upload-hint">JPG, PNG, WEBP — máx. 5 MB</span>
+
+          <button id="btnGuardarConfig" class="btn-guardar">Guardar información</button>
+        </section>
+
+        <!-- CAMBIAR CONTRASEÑA -->
+        <section class="admin-section">
+          <h2>Cambiar contraseña del admin</h2>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="passActualInput">Contraseña actual</label>
+              <input type="password" id="passActualInput" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label for="passNuevaInput">Contraseña nueva</label>
+              <input type="password" id="passNuevaInput" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label for="passConfirmarInput">Confirmar contraseña nueva</label>
+              <input type="password" id="passConfirmarInput" placeholder="••••••••">
+            </div>
           </div>
-          <input type="file" id="inputImagen" accept="image/*" style="display:none;">
-        </div>
 
-        <div class="upload-acciones">
-          <button id="btnSeleccionarImagen" class="btn-secondary">Seleccionar imagen</button>
-          <button id="btnSubirImagen" class="btn-descargar" disabled>⬆ Subir imagen</button>
-          <button id="btnQuitarImagen" class="btn-cancelar" style="display:none;">✕ Quitar imagen</button>
-        </div>
+          <button id="btnCambiarPass" class="btn-guardar">Cambiar contraseña</button>
+        </section>
 
-        <div id="uploadStatus" class="upload-status" style="display:none;"></div>
-      </section>
+        <!-- IMAGEN DE PRESENTACIÓN -->
+        <section class="admin-section">
+          <h2>Imagen de presentación</h2>
+          <p class="admin-hint">Esta imagen aparece automáticamente cuando el usuario entra al índice.</p>
 
-      <!-- BOTONES DE ACCIÓN -->
-      <section class="admin-section">
-        <div class="acciones-superiores">
-          <button id="btnDescargarRifa" class="btn-descargar">⬇ Descargar rifa (CSV)</button>
-          <button id="btnLimpiarGrilla" class="btn-cancelar">Limpiar grilla entera</button>
-        </div>
-      </section>
+          <div class="upload-area" id="uploadArea">
+            <div id="previewActual" class="preview-actual" style="display:none;">
+              <img id="imgPreviewActual" src="" alt="Imagen actual">
+              <span class="preview-label">Imagen actual</span>
+            </div>
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <span class="upload-icon">🖼️</span>
+              <span>Arrastrá una imagen o hacé click para seleccionar</span>
+              <span class="upload-hint">JPG, PNG, WEBP — máx. 5 MB</span>
+            </div>
+            <input type="file" id="inputImagen" accept="image/*" style="display:none;">
+          </div>
 
-      <!-- TABLA DE NÚMEROS -->
-      <section class="admin-section">
-        <h2>Lista de números</h2>
+          <div class="upload-acciones">
+            <button id="btnSeleccionarImagen" class="btn-secondary">Seleccionar imagen</button>
+            <button id="btnSubirImagen" class="btn-descargar" disabled>⬆ Subir imagen</button>
+            <button id="btnQuitarImagen" class="btn-cancelar" style="display:none;">✕ Quitar imagen</button>
+          </div>
 
-        <div class="tabla-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Número</th>
-                <th>Nombre</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tablaAdmin"></tbody>
-          </table>
-        </div>
-      </section>
+          <div id="uploadStatus" class="upload-status" style="display:none;"></div>
+        </section>
+
+        <!-- BOTONES DE ACCIÓN -->
+        <section class="admin-section">
+          <div class="acciones-superiores">
+            <button id="btnDescargarRifa" class="btn-descargar">⬇ Descargar rifa (CSV)</button>
+            <button id="btnBloquear" class="btn-bloquear">🔒 Bloquear números</button>
+            <button id="btnLimpiarGrilla" class="btn-cancelar">Limpiar grilla entera</button>
+          </div>
+        </section>
+
+        <!-- TABLA DE NÚMEROS -->
+        <section class="admin-section">
+          <h2>Lista de números</h2>
+
+          <div class="tabla-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Nombre</th>
+                  <th>Teléfono</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaAdmin"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 
