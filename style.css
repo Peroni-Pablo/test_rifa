@@ -233,6 +233,7 @@ body {
   font-size: 13px;
   color: #78350f;
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 /* Footer del modal */
